@@ -152,16 +152,16 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
         <div className="space-y-2">
           <Label>Dietary Preferences</Label>
           <div className="grid grid-cols-1 gap-2">
-            {Object.entries(dietaryOptions).map(([key, value]) => (
+            {['VEGAN', 'VEGETARIAN', 'NON_VEGETARIAN'].map((key) => (
               <div key={key} className="flex items-center space-x-2">
                 <Checkbox
                   id={key}
-                  checked={watchedFields.dietaryPreferences?.includes(value)}
+                  checked={watchedFields.dietaryPreferences?.includes(key.toLowerCase())}
                   onCheckedChange={(checked) => {
                     const current = watchedFields.dietaryPreferences || [];
                     const updated = checked
-                      ? [...current, value]
-                      : current.filter(v => v !== value);
+                      ? [...current, key.toLowerCase()]
+                      : current.filter(v => v !== key.toLowerCase());
                     handleFilterChange('dietaryPreferences', updated);
                   }}
                 />
