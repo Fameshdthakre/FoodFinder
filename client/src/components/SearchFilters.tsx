@@ -45,23 +45,26 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
       sortBy: 'rating'
     };
 
-    // Reset form values including sliders
+    // Reset form values
     setValue('rating', 0);
     setValue('maxPrice', 4);
     setValue('minPrice', 1);
     setValue('radius', 5);
-    
-    // Force slider updates by triggering events
-    const ratingSlider = document.querySelector('input[type="range"][max="5"]') as HTMLInputElement;
+
+    // Reset star rating slider
+    const ratingSlider = document.querySelector('[data-slider-thumb="true"]') as HTMLElement;
     if (ratingSlider) {
-      ratingSlider.value = '0';
-      ratingSlider.dispatchEvent(new Event('change', { bubbles: true }));
+      ratingSlider.style.transform = 'translateX(0%)';
+      ratingSlider.style.left = '0%';
     }
 
-    const priceSlider = document.querySelector('input[type="range"][max="4"]') as HTMLInputElement;
-    if (priceSlider) {
-      priceSlider.value = '1,4';
-      priceSlider.dispatchEvent(new Event('change', { bubbles: true }));
+    // Reset price range slider thumbs
+    const priceSliderThumbs = document.querySelectorAll('[data-slider-thumb="true"]') as NodeListOf<HTMLElement>;
+    if (priceSliderThumbs.length >= 2) {
+      priceSliderThumbs[0].style.transform = 'translateX(0%)';
+      priceSliderThumbs[0].style.left = '0%';
+      priceSliderThumbs[1].style.transform = 'translateX(0%)';
+      priceSliderThumbs[1].style.left = '100%';
     }
 
     // Reset radius input
