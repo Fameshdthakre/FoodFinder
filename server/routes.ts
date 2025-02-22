@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { SearchFilters, DietaryOptions } from "@shared/schema";
+import multer from 'multer';
+import { parse } from 'csv-parse';
 
 export async function registerRoutes(app: Express) {
   // Search restaurants with filters
@@ -10,11 +12,14 @@ export async function registerRoutes(app: Express) {
       const filters: SearchFilters = {
         cuisine: req.query.cuisine as string,
         maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string) : undefined,
+        minPrice: req.query.minPrice ? parseInt(req.query.minPrice as string) : undefined,
+        rating: req.query.rating ? parseFloat(req.query.rating as string) : undefined,
         lat: req.query.lat ? parseFloat(req.query.lat as string) : undefined,
         lng: req.query.lng ? parseFloat(req.query.lng as string) : undefined,
         radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined,
         dietaryPreferences: req.query.dietary ? (req.query.dietary as string).split(',') : undefined,
-        userId: req.query.userId as string
+        userId: req.query.userId as string,
+        sortBy: req.query.sortBy as "rating" | "price" | "distance" | undefined
       };
 
       console.log('Received filters:', filters);
@@ -22,15 +27,7 @@ export async function registerRoutes(app: Express) {
       const results = await storage.searchRestaurants(filters);
       console.log(`Found ${results.length} restaurants`);
 
-      // Calculate recommendation scores
-      const scoredResults = results.map(restaurant => ({
-        ...restaurant,
-        score: calculateScore(restaurant, filters)
-      }));
-
-      // Sort by score and return top 10
-      scoredResults.sort((a, b) => (b.score || 0) - (a.score || 0));
-      res.json(scoredResults.slice(0, 10));
+      res.json(results);
     } catch (error) {
       console.error('Error in /api/restaurants:', error);
       res.status(500).json({ error: "Failed to search restaurants" });
@@ -73,11 +70,9 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // CSV Upload endpoint
-  const multer = require('multer');
-  const { parse } = require('csv-parse');
   const upload = multer({ storage: multer.memoryStorage() });
 
+  // CSV Upload endpoint
   app.post("/api/restaurants/upload-csv", upload.single('file'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -129,57 +124,4 @@ export async function registerRoutes(app: Express) {
 
   const httpServer = createServer(app);
   return httpServer;
-}
-
-function calculateScore(restaurant: any, filters: SearchFilters) {
-  let score = 0;
-
-  // Base score components (40%)
-  const ratingScore = (restaurant.rating / 5) * 0.2;
-  const priceScore = ((5 - restaurant.priceLevel) / 4) * 0.1;
-  const sentimentScore = ((restaurant.sentimentScore + 1) / 2) * 0.1;
-  score += ratingScore + priceScore + sentimentScore;
-
-  // Location proximity score (30%)
-  if (filters.lat && filters.lng) {
-    const distance = calculateDistance(
-      filters.lat,
-      filters.lng,
-      parseFloat(restaurant.lat),
-      parseFloat(restaurant.lng)
-    );
-    const proximityScore = Math.max(0, 1 - (distance / (filters.radius || 5))) * 0.3;
-    score += proximityScore;
-  }
-
-  // Dietary preference match (20%)
-  if (filters.dietaryPreferences?.length && restaurant.dietaryOptions?.length) {
-    const matchingPrefs = filters.dietaryPreferences.filter(pref =>
-      restaurant.dietaryOptions.includes(pref)
-    ).length;
-    const dietaryScore = (matchingPrefs / filters.dietaryPreferences.length) * 0.2;
-    score += dietaryScore;
-  }
-
-  // Popularity and trend score (10%)
-  const popularityScore = Math.min(1, restaurant.totalReviews / 1000) * 0.1;
-  score += popularityScore;
-
-  return score;
-}
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in km
-}
-
-function deg2rad(deg: number): number {
-  return deg * (Math.PI / 180);
 }

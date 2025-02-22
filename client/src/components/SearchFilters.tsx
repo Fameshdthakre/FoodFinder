@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -30,41 +29,40 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
       maxPrice: 4,
       minPrice: 1,
       radius: 5,
-      rating: 0
+      rating: 0,
+      cuisine: 'all',
+      dietaryPreferences: [],
+      sortBy: 'rating'
     }
   });
 
   const clearFilters = () => {
-    // Default values
-    const defaultValues = {
-      rating: 0,
-      maxPrice: 4,
-      minPrice: 1,
-      radius: 5,
-      dietaryPreferences: [],
-      sortBy: 'rating'
-    };
-
     // Reset form values
     setValue('rating', 0);
     setValue('maxPrice', 4);
     setValue('minPrice', 1);
     setValue('radius', 5);
+    setValue('cuisine', 'all');
+    setValue('dietaryPreferences', []);
+    setValue('sortBy', 'rating');
+
+    // Reset cuisine select
+    const selectTrigger = document.querySelector('[data-state]');
+    if (selectTrigger) {
+      selectTrigger.textContent = 'All Cuisines';
+    }
 
     // Reset star rating slider
-    const ratingSlider = document.querySelector('[data-slider-thumb="true"]') as HTMLElement;
+    const ratingSlider = document.querySelector('[role="slider"]') as HTMLElement;
     if (ratingSlider) {
-      ratingSlider.style.transform = 'translateX(0%)';
       ratingSlider.style.left = '0%';
     }
 
     // Reset price range slider thumbs
-    const priceSliderThumbs = document.querySelectorAll('[data-slider-thumb="true"]') as NodeListOf<HTMLElement>;
-    if (priceSliderThumbs.length >= 2) {
-      priceSliderThumbs[0].style.transform = 'translateX(0%)';
-      priceSliderThumbs[0].style.left = '0%';
-      priceSliderThumbs[1].style.transform = 'translateX(0%)';
-      priceSliderThumbs[1].style.left = '100%';
+    const priceSliders = document.querySelectorAll('[role="slider"]') as NodeListOf<HTMLElement>;
+    if (priceSliders.length >= 2) {
+      priceSliders[0].style.left = '0%';
+      priceSliders[1].style.left = '100%';
     }
 
     // Reset radius input
@@ -73,17 +71,23 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
       radiusInput.value = '5';
     }
 
-    // Update parent component with reset values
-    onFilterChange({
-      ...defaultValues,
-      lat: currentFilters.lat,
-      lng: currentFilters.lng
+    // Reset checkboxes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
     });
 
-    // Reset form checkboxes
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach((checkbox: HTMLInputElement) => {
-      checkbox.checked = false;
+    // Update parent component with reset values
+    onFilterChange({
+      cuisine: 'all',
+      rating: 0,
+      maxPrice: 4,
+      minPrice: 1,
+      radius: 5,
+      dietaryPreferences: [],
+      sortBy: 'rating',
+      lat: currentFilters.lat,
+      lng: currentFilters.lng
     });
   };
 
@@ -118,7 +122,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
         <Label>Cuisine Type</Label>
         <Select 
           onValueChange={(value) => handleFilterChange('cuisine', value)}
-          defaultValue={watchedFields.cuisine || 'all'}
+          defaultValue="all"
         >
           <SelectTrigger>
             <SelectValue placeholder="Select cuisine" />
@@ -148,7 +152,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
             onValueChange={(value) => handleFilterChange('rating', value[0])}
           />
           <div className="text-sm text-muted-foreground mt-1">
-            {watchedFields.rating} stars and above
+            {watchedFields.rating || 0} stars and above
           </div>
         </div>
       </div>
@@ -167,7 +171,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
             }}
           />
           <div className="text-sm text-muted-foreground mt-1">
-            {watchedFields.minPrice}$ - {watchedFields.maxPrice}$
+            {watchedFields.minPrice || 1}$ - {watchedFields.maxPrice || 4}$
           </div>
         </div>
       </div>
@@ -178,7 +182,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
           type="number"
           min={1}
           max={20}
-          defaultValue={watchedFields.radius || 5}
+          defaultValue={5}
           onChange={(e) => handleFilterChange('radius', parseFloat(e.target.value))}
         />
       </div>
@@ -211,8 +215,6 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
           </div>
         </div>
       )}
-
-      
 
       <div className="flex justify-between items-center pt-4">
         <Button variant="outline" onClick={clearFilters}>
