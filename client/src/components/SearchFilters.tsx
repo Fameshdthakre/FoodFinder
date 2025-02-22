@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { SearchFilters, UserPreference } from "@shared/schema";
 import React from 'react';
 
-const CUISINES = [
-  "Italian", "Japanese", "Mexican", "Chinese", "Indian",
-  "American", "Thai", "Mediterranean", "French", "Korean"
-];
+const CUISINES = ["Indian", "Chinese", "American", "Thai"];
 
 interface Props {
   onFilterChange: (filters: SearchFilters) => void;
@@ -20,24 +18,30 @@ interface Props {
 }
 
 export default function RestaurantSearchFilters({ onFilterChange, userId }: Props) {
-  const clearFilters = () => {
-    setValue('cuisine', undefined);
-    setValue('maxPrice', 4);
-    setValue('radius', 5);
-    setValue('dietaryPreferences', []);
-    onFilterChange({
-      maxPrice: 4,
-      radius: 5,
-      dietaryPreferences: []
-    });
-  };
-
   const { register, setValue, watch } = useForm<SearchFilters>({
     defaultValues: {
       maxPrice: 4,
-      radius: 5
+      minPrice: 1,
+      radius: 5,
+      rating: 0
     }
   });
+
+  const clearFilters = () => {
+    setValue('cuisine', undefined);
+    setValue('maxPrice', 4);
+    setValue('minPrice', 1);
+    setValue('radius', 5);
+    setValue('rating', 0);
+    setValue('dietaryPreferences', []);
+    onFilterChange({
+      maxPrice: 4,
+      minPrice: 1,
+      radius: 5,
+      rating: 0,
+      dietaryPreferences: []
+    });
+  };
 
   // Fetch user preferences if userId is provided
   const { data: userPrefs } = useQuery<UserPreference>({
@@ -63,20 +67,6 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
     };
     onFilterChange(updatedFilters);
   };
-
-  // Update filters with user preferences when available
-  React.useEffect(() => {
-    if (userPrefs?.dietaryPreferences) {
-      setValue('dietaryPreferences', userPrefs.dietaryPreferences);
-      setValue('maxPrice', userPrefs.pricePreference || 4);
-      onFilterChange({
-        ...watchedFields,
-        dietaryPreferences: userPrefs.dietaryPreferences,
-        maxPrice: userPrefs.pricePreference || 4,
-        userId
-      });
-    }
-  }, [userPrefs]);
 
   return (
     <div className="space-y-6">
@@ -104,14 +94,39 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
       </div>
 
       <div className="space-y-2">
-        <Label>Maximum Price Level (${watchedFields.maxPrice})</Label>
+        <Label>Star Rating (Minimum)</Label>
         <div className="pt-2">
           <Slider
-            defaultValue={[watchedFields.maxPrice || 4]}
-            max={4}
+            defaultValue={[watchedFields.rating || 0]}
+            max={5}
+            min={0}
+            step={0.5}
+            onValueChange={(value) => handleFilterChange('rating', value[0])}
+          />
+          <div className="text-sm text-muted-foreground mt-1">
+            {watchedFields.rating} stars and above
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Price Range</Label>
+        <div className="flex gap-4">
+          <Input
+            type="number"
             min={1}
-            step={1}
-            onValueChange={(value) => handleFilterChange('maxPrice', value[0])}
+            max={watchedFields.maxPrice}
+            value={watchedFields.minPrice}
+            onChange={(e) => handleFilterChange('minPrice', parseInt(e.target.value))}
+            placeholder="Min"
+          />
+          <Input
+            type="number"
+            min={watchedFields.minPrice}
+            max={4}
+            value={watchedFields.maxPrice}
+            onChange={(e) => handleFilterChange('maxPrice', parseInt(e.target.value))}
+            placeholder="Max"
           />
         </div>
       </div>
@@ -130,7 +145,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
       {dietaryOptions && (
         <div className="space-y-2">
           <Label>Dietary Preferences</Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {Object.entries(dietaryOptions).map(([key, value]) => (
               <div key={key} className="flex items-center space-x-2">
                 <Checkbox

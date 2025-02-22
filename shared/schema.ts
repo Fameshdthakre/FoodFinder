@@ -56,6 +56,8 @@ export type InsertUserInteraction = typeof userInteractions.$inferInsert;
 export type SearchFilters = {
   cuisine?: string;
   maxPrice?: number;
+  minPrice?: number;
+  rating?: number;
   lat?: number;
   lng?: number;
   radius?: number;
@@ -65,11 +67,7 @@ export type SearchFilters = {
 
 // Dietary options enum
 export const DietaryOptions = {
-  VEGETARIAN: 'vegetarian',
   VEGAN: 'vegan',
-  GLUTEN_FREE: 'gluten-free',
-  HALAL: 'halal',
-  KOSHER: 'kosher',
-  DAIRY_FREE: 'dairy-free',
-  NUT_FREE: 'nut-free'
+  VEGETARIAN: 'vegetarian',
+  NON_VEGETARIAN: 'non-vegetarian'
 } as const;
