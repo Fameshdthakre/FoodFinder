@@ -17,6 +17,12 @@ interface Props {
   userId?: string;
 }
 
+const SORT_OPTIONS = [
+  { value: 'rating', label: 'Star Rating' },
+  { value: 'price', label: 'Price' },
+  { value: 'distance', label: 'Distance' }
+];
+
 export default function RestaurantSearchFilters({ onFilterChange, userId }: Props) {
   const { register, setValue, watch } = useForm<SearchFilters>({
     defaultValues: {
@@ -170,6 +176,28 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
           </div>
         </div>
       )}
+
+      <div className="space-y-2">
+        <Label>Sort By</Label>
+        <Select 
+          onValueChange={(value) => handleFilterChange('sortBy', value)}
+          defaultValue={watchedFields.sortBy || 'rating'}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sort by..." />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map(option => (
+              <SelectItem 
+                key={option.value} 
+                value={option.value}
+              >
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="flex justify-between items-center pt-4">
         <Button variant="outline" onClick={clearFilters}>

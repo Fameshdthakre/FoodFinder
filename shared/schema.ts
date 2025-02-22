@@ -63,6 +63,7 @@ export type SearchFilters = {
   radius?: number;
   dietaryPreferences?: string[];
   userId?: string;
+  sortBy?: 'rating' | 'price' | 'distance';
 };
 
 // Dietary options enum

@@ -65,6 +65,25 @@ export class DatabaseStorage implements IStorage {
       query = query.where(and(...conditions));
     }
 
+    // Apply sorting
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case 'rating':
+          query = query.orderBy(desc(restaurants.rating));
+          break;
+        case 'price':
+          query = query.orderBy(asc(restaurants.priceLevel));
+          break;
+        case 'distance':
+          if (filters.lat && filters.lng) {
+            query = query.orderBy(
+              sql`point(${restaurants.lng}, ${restaurants.lat}) <-> point(${filters.lng}, ${filters.lat})`
+            );
+          }
+          break;
+      }
+    }
+
     const results = await query;
     console.log('Query returned:', results.length, 'results');
 
