@@ -1,6 +1,6 @@
 import { restaurants, userPreferences, userInteractions, type Restaurant, type InsertRestaurant, type SearchFilters, type UserPreference, type InsertUserPreference } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, lte, sql } from "drizzle-orm";
+import { eq, and, lte, asc, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   searchRestaurants(filters: SearchFilters): Promise<Restaurant[]>;
@@ -37,6 +37,14 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
+    // Filter by rating if specified
+    if (typeof filters.rating === 'number' && filters.rating > 0) {
+      console.log('Adding rating filter:', filters.rating);
+      conditions.push(
+        sql`${restaurants.rating}::numeric >= ${filters.rating}::numeric`
+      );
+    }
+
     // Filter by dietary preferences if specified
     if (filters.dietaryPreferences?.length) {
       console.log('Adding dietary filters:', filters.dietaryPreferences);
@@ -67,6 +75,7 @@ export class DatabaseStorage implements IStorage {
 
     // Apply sorting
     if (filters.sortBy) {
+      console.log('Applying sort:', filters.sortBy);
       switch (filters.sortBy) {
         case 'rating':
           query = query.orderBy(desc(restaurants.rating));

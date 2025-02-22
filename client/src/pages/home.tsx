@@ -79,7 +79,7 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Sort By</h3>
                 <Select 
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
+                  onValueChange={(value: "rating" | "price" | "distance") => setFilters(prev => ({ ...prev, sortBy: value }))}
                   defaultValue={filters.sortBy || 'rating'}
                 >
                   <SelectTrigger className="bg-white/5 backdrop-blur-sm border-2 hover:bg-white/10 transition-colors">
