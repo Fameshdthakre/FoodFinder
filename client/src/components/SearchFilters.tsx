@@ -15,6 +15,7 @@ const CUISINES = ["Indian", "Chinese", "American", "Thai"];
 interface Props {
   onFilterChange: (filters: SearchFilters) => void;
   userId?: string;
+  currentFilters: SearchFilters;
 }
 
 const SORT_OPTIONS = [
@@ -48,8 +49,8 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
       rating: 0,
       dietaryPreferences: [],
       sortBy: 'rating',
-      lat: filters.lat,
-      lng: filters.lng
+      lat: props.currentFilters.lat,
+      lng: props.currentFilters.lng
     });
   };
 

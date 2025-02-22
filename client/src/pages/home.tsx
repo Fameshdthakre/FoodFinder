@@ -68,6 +68,7 @@ export default function Home() {
             <Card className="p-4 h-full overflow-y-auto">
               <RestaurantSearchFilters
                 onFilterChange={setFilters}
+                currentFilters={filters}
               />
             </Card>
           </div>
