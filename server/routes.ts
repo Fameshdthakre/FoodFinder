@@ -15,7 +15,10 @@ export async function registerRoutes(app: Express) {
         radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined
       };
 
+      console.log('Received filters:', filters); // Debug log
+
       const results = await storage.searchRestaurants(filters);
+      console.log(`Found ${results.length} restaurants`); // Debug log
 
       // Calculate recommendation scores
       const scoredResults = results.map(restaurant => ({
@@ -27,6 +30,7 @@ export async function registerRoutes(app: Express) {
       scoredResults.sort((a, b) => b.score - a.score);
       res.json(scoredResults.slice(0, 10));
     } catch (error) {
+      console.error('Error in /api/restaurants:', error);
       res.status(500).json({ error: "Failed to search restaurants" });
     }
   });
@@ -38,10 +42,10 @@ export async function registerRoutes(app: Express) {
 function calculateScore(restaurant: any) {
   // Normalize ratings to 0-1
   const ratingScore = restaurant.rating / 5;
-  
+
   // Normalize price (1-4) to 0-1 (inverted so cheaper is better)
   const priceScore = (5 - restaurant.priceLevel) / 4;
-  
+
   // Normalize sentiment (-1 to 1) to 0-1
   const sentimentScore = (restaurant.sentimentScore + 1) / 2;
 

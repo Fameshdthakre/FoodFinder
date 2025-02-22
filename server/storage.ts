@@ -11,33 +11,32 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async searchRestaurants(filters: SearchFilters): Promise<Restaurant[]> {
     let query = db
-      .select({
-        id: restaurants.id,
-        name: restaurants.name,
-        rating: sql<number>`CAST(${restaurants.rating} AS float)`,
-        totalReviews: sql<number>`CAST(${restaurants.totalReviews} AS integer)`,
-        priceLevel: sql<number>`CAST(${restaurants.priceLevel} AS integer)`,
-        categories: restaurants.categories,
-        address: restaurants.address,
-        lat: sql<number>`CAST(${restaurants.lat} AS float)`,
-        lng: sql<number>`CAST(${restaurants.lng} AS float)`,
-        reviews: restaurants.reviews,
-        sentimentScore: sql<number>`CAST(${restaurants.sentimentScore} AS float)`,
-        placeUrl: restaurants.placeUrl
-      })
-      .from(restaurants);
+      .select()
+      .from(restaurants)
+      .limit(50);
 
+    // Build conditions array
+    const conditions = [];
+
+    // Filter by cuisine if specified and not 'all'
     if (filters.cuisine && filters.cuisine !== 'all') {
-      query = query.where(sql`${restaurants.categories} @> ARRAY[${filters.cuisine}]::varchar[]`);
+      console.log('Adding cuisine filter:', filters.cuisine); // Debug log
+      conditions.push(
+        sql`${restaurants.categories}::text[] @> ARRAY[${filters.cuisine}]::text[]`
+      );
     }
 
-    if (filters.maxPrice) {
-      query = query.where(lte(restaurants.priceLevel, filters.maxPrice));
+    // Filter by price level if specified
+    if (typeof filters.maxPrice === 'number') {
+      console.log('Adding price filter:', filters.maxPrice); // Debug log
+      conditions.push(
+        lte(restaurants.priceLevel, filters.maxPrice)
+      );
     }
 
-    // Basic proximity filter if location provided
+    // Filter by location if coordinates and radius are provided
     if (filters.lat && filters.lng && filters.radius) {
-      // Simplified distance calculation
+      console.log('Adding location filter:', { lat: filters.lat, lng: filters.lng, radius: filters.radius }); // Debug log
       const latDiff = 0.0145 * filters.radius; // Rough approximation for km to lat
       const lngDiff = 0.0145 * filters.radius;
 
@@ -46,31 +45,26 @@ export class DatabaseStorage implements IStorage {
       const minLng = filters.lng - lngDiff;
       const maxLng = filters.lng + lngDiff;
 
-      query = query.where(and(
-        sql`CAST(${restaurants.lat} AS float) BETWEEN ${minLat} AND ${maxLat}`,
-        sql`CAST(${restaurants.lng} AS float) BETWEEN ${minLng} AND ${maxLng}`
-      ));
+      conditions.push(
+        sql`${restaurants.lat}::float8 BETWEEN ${minLat} AND ${maxLat}`,
+        sql`${restaurants.lng}::float8 BETWEEN ${minLng} AND ${maxLng}`
+      );
     }
 
-    return await query.limit(50);
+    // Apply all conditions if any exist
+    if (conditions.length > 0) {
+      console.log('Applying conditions:', conditions.length); // Debug log
+      query = query.where(and(...conditions));
+    }
+
+    const results = await query;
+    console.log('Query returned:', results.length, 'results'); // Debug log
+    return results;
   }
 
   async getRestaurant(id: number): Promise<Restaurant | undefined> {
     const [restaurant] = await db
-      .select({
-        id: restaurants.id,
-        name: restaurants.name,
-        rating: sql<number>`CAST(${restaurants.rating} AS float)`,
-        totalReviews: sql<number>`CAST(${restaurants.totalReviews} AS integer)`,
-        priceLevel: sql<number>`CAST(${restaurants.priceLevel} AS integer)`,
-        categories: restaurants.categories,
-        address: restaurants.address,
-        lat: sql<number>`CAST(${restaurants.lat} AS float)`,
-        lng: sql<number>`CAST(${restaurants.lng} AS float)`,
-        reviews: restaurants.reviews,
-        sentimentScore: sql<number>`CAST(${restaurants.sentimentScore} AS float)`,
-        placeUrl: restaurants.placeUrl
-      })
+      .select()
       .from(restaurants)
       .where(eq(restaurants.id, id));
     return restaurant;
