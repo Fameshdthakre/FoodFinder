@@ -27,7 +27,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(restaurants);
 
-    if (filters.cuisine) {
+    if (filters.cuisine && filters.cuisine !== 'all') {
       query = query.where(sql`${restaurants.categories} @> ARRAY[${filters.cuisine}]::varchar[]`);
     }
 

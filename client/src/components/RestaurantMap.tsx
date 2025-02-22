@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Restaurant } from '@shared/schema';
 import L from 'leaflet';
 
 // Fix Leaflet default marker icon issue
-// Had to use dynamic imports for marker icons since they're images
 let DefaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -15,20 +14,31 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-interface Props {
-  restaurants: Restaurant[];
+// Helper component to update map center
+function ChangeMapView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
 }
 
-export default function RestaurantMap({ restaurants }: Props) {
-  const defaultCenter: [number, number] = [40.730610, -73.935242]; // Default to NYC
+interface Props {
+  restaurants: Restaurant[];
+  center?: [number, number];
+}
+
+export default function RestaurantMap({ restaurants, center }: Props) {
+  const defaultCenter: [number, number] = [40.7128, -74.0060]; // Default to NYC
 
   return (
     <div className="w-full h-[400px] rounded-lg overflow-hidden shadow-md">
       <MapContainer
-        center={defaultCenter}
+        center={center || defaultCenter}
         zoom={12}
         style={{ height: '100%', width: '100%' }}
       >
+        {center && <ChangeMapView center={center} />}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -42,6 +52,7 @@ export default function RestaurantMap({ restaurants }: Props) {
               <div>
                 <h3 className="font-semibold">{restaurant.name}</h3>
                 <p className="text-sm">{restaurant.rating} ⭐</p>
+                <p className="text-xs text-muted-foreground">{restaurant.address}</p>
               </div>
             </Popup>
           </Marker>
