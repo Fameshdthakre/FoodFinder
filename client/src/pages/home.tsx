@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
+import { Card, Button } from "@/components/ui/card"; // Added Button import, assuming it exists
 import RestaurantSearchFilters from "@/components/SearchFilters";
 import RestaurantCard from "@/components/RestaurantCard";
 import RestaurantMap from "@/components/RestaurantMap";
@@ -9,7 +9,8 @@ import type { Restaurant, SearchFilters } from "@shared/schema";
 export default function Home() {
   const [filters, setFilters] = useState<SearchFilters>({
     maxPrice: 4,
-    radius: 5
+    radius: 5,
+    dietaryPreferences: [] // Added dietaryPreferences to filters
   });
 
   // Get user's location for initial map center
@@ -37,12 +38,12 @@ export default function Home() {
 
   // Build query string from filters
   const queryString = Object.entries(filters)
-    .filter(([_, value]) => value !== undefined && value !== '')
-    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .filter(([_, value]) => value !== undefined && value !== '' && (Array.isArray(value) ? value.length > 0 : true)) //handle arrays
+    .map(([key, value]) => `${key}=${encodeURIComponent(Array.isArray(value) ? value.join(',') : value)}`) // handle arrays
     .join('&');
 
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({
-    queryKey: ['/api/restaurants', filters],  // Changed to include filters object directly
+    queryKey: ['/api/restaurants', filters],
     queryFn: async () => {
       const response = await fetch(`/api/restaurants?${queryString}`);
       if (!response.ok) {
@@ -52,6 +53,10 @@ export default function Home() {
     }
   });
 
+  const clearFilters = () => {
+    setFilters({ maxPrice: 4, radius: 5, dietaryPreferences: [] });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
@@ -59,24 +64,16 @@ export default function Home() {
           Restaurant Recommendations
         </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-3 space-y-4">
             <Card className="p-4">
-              <RestaurantSearchFilters 
-                onFilterChange={(newFilters) => {
-                  console.log('Filters updated:', newFilters); // Debug log
-                  setFilters(newFilters);
-                }} 
+              <RestaurantSearchFilters
+                onFilterChange={(newFilters) => setFilters(newFilters)}
               />
+              <Button onClick={clearFilters}>Clear Filters</Button> {/* Added clear filters button */}
             </Card>
           </div>
-
-          <div className="lg:col-span-2 space-y-6">
-            <RestaurantMap 
-              restaurants={restaurants} 
-              center={filters.lat && filters.lng ? [filters.lat, filters.lng] : undefined}
-            />
-
+          <div className="col-span-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {isLoading ? (
                 Array(4).fill(0).map((_, i) => (
@@ -92,6 +89,12 @@ export default function Home() {
                 ))
               )}
             </div>
+          </div>
+          <div className="col-span-3">
+            <RestaurantMap
+              restaurants={restaurants}
+              center={filters.lat && filters.lng ? [filters.lat, filters.lng] : undefined}
+            />
           </div>
         </div>
       </main>

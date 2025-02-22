@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -19,6 +20,17 @@ interface Props {
 }
 
 export default function RestaurantSearchFilters({ onFilterChange, userId }: Props) {
+  const clearFilters = () => {
+    setValue('cuisine', undefined);
+    setValue('maxPrice', 4);
+    setValue('radius', 5);
+    setValue('dietaryPreferences', []);
+    onFilterChange({
+      maxPrice: 4,
+      radius: 5,
+      dietaryPreferences: []
+    });
+  };
   const { register, setValue, watch } = useForm<SearchFilters>({
     defaultValues: {
       maxPrice: 4,
@@ -103,6 +115,12 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
             onValueChange={(value) => handleFilterChange('maxPrice', value[0])}
           />
         </div>
+      </div>
+
+      <div className="flex justify-between items-center pt-4">
+        <Button variant="outline" onClick={clearFilters}>
+          Clear Filters
+        </Button>
       </div>
 
       <div className="space-y-2">
