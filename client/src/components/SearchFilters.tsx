@@ -35,21 +35,25 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
   });
 
   const clearFilters = () => {
-    // Reset form values
-    setValue('cuisine', 'all');
-    setValue('maxPrice', 4);
-    setValue('minPrice', 1);
-    setValue('radius', 5);
-    setValue('rating', 0);
-    setValue('dietaryPreferences', []);
-    setValue('sortBy', 'rating');
-
-    // Update parent component with reset values
-    onFilterChange({
+    // Default values
+    const defaultValues = {
       cuisine: 'all',
       maxPrice: 4,
       minPrice: 1,
       radius: 5,
+      rating: 0,
+      dietaryPreferences: [],
+      sortBy: 'rating'
+    };
+
+    // Reset form values
+    Object.entries(defaultValues).forEach(([key, value]) => {
+      setValue(key as keyof SearchFilters, value);
+    });
+
+    // Update parent component with reset values
+    onFilterChange({
+      ...defaultValues,
       rating: 0,
       dietaryPreferences: [],
       sortBy: 'rating',
