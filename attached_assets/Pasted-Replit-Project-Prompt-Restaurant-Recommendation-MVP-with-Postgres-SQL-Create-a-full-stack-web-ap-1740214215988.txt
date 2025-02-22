@@ -1,0 +1,75 @@
+Replit Project Prompt: Restaurant Recommendation MVP with Postgres SQL
+
+Create a full-stack web app that recommends restaurants using a Postgres SQL database and sentiment analysis. Users can search by cuisine, price, and location, view results on a map, and see rankings based on ratings, affordability, and review sentiment.
+
+Requirements:
+
+Database (Postgres SQL):
+
+Schema: Create a table restaurants with columns:
+id (SERIAL PRIMARY KEY), name (VARCHAR), rating (NUMERIC), total_reviews (INT), price_level (INT), category (VARCHAR[]), address (VARCHAR), lat (NUMERIC), lng (NUMERIC), reviews (TEXT[]), sentiment_score (NUMERIC), place_url (VARCHAR).
+
+Data Upload: Manual CSV uploads to Postgres once a week (no API scraping).
+
+Backend Logic (Node.js/Express):
+
+Connect to Postgres using pg or Prisma ORM.
+
+Fetch restaurants filtered by user preferences (cuisine, max price, location proximity).
+
+Calculate recommendation scores with:
+
+40% weight on ratings (normalized to 0–1).
+
+30% weight on price tiers (lower = better).
+
+30% weight on sentiment scores (-1 to 1 → normalized to 0–1).
+
+Frontend UI (React + Tailwind CSS):
+
+Search bar with filters for cuisine, price, and location.
+
+Display results as cards with name, rating (⭐), price tier (e.g., $$), sentiment (😊/😐), and address.
+
+Interactive Mapbox/Leaflet map showing restaurant locations.
+
+Sentiment Analysis:
+
+Use Python’s vaderSentiment library to pre-calculate sentiment_score for reviews before uploading data to Postgres.
+
+Deployment:
+
+Host the app on Replit using its Postgres integration for the database.
+
+Use Replit’s built-in server for the Node.js/Express backend.
+
+APIs/Integrations:
+
+Mapbox (for interactive maps).
+
+Postgres SQL (Replit’s native integration).
+
+Key Features:
+
+Filter restaurants by price, cuisine, and proximity.
+
+Top 10 recommendations sorted by weighted scores.
+
+Visual sentiment indicators (emojis) and price tiers.
+
+Instructions for Replit AI:
+
+Auto-generate:
+
+React frontend with search/filter components.
+
+Node.js/Express backend with Postgres connection.
+
+Python script for sentiment analysis (vaderSentiment).
+
+Install dependencies:
+npm install express pg react-map-gl
+pip install vaderSentiment pandas
+Configure environment variables for Postgres credentials and Mapbox API key.
+
+Final Output: A live app on Replit where users search for restaurants, view recommendations, and see results on a map. Data is manually updated weekly via CSV imports to Postgres.
