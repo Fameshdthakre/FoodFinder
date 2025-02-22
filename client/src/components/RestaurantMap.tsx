@@ -32,7 +32,7 @@ export default function RestaurantMap({ restaurants, center }: Props) {
   const defaultCenter: [number, number] = [40.7128, -74.0060]; // Default to NYC
 
   return (
-    <div className="w-full h-[400px] rounded-lg overflow-hidden shadow-md">
+    <div className="h-full w-full">
       <MapContainer
         center={center || defaultCenter}
         zoom={12}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button"; // Fixed import
+import { Button } from "@/components/ui/button";
 import RestaurantSearchFilters from "@/components/SearchFilters";
 import RestaurantCard from "@/components/RestaurantCard";
 import RestaurantMap from "@/components/RestaurantMap";
@@ -54,47 +54,55 @@ export default function Home() {
     }
   });
 
-
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
+      <div className="container mx-auto p-4">
         <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Restaurant Recommendations
         </h1>
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-3 space-y-4">
-            <Card className="p-4">
+        <div className="flex h-[calc(100vh-8rem)] gap-4">
+          {/* Search Filters Section - 25% */}
+          <div className="w-1/4">
+            <Card className="p-4 h-full overflow-y-auto">
               <RestaurantSearchFilters
                 onFilterChange={setFilters}
               />
             </Card>
           </div>
-          <div className="col-span-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* Restaurant List Section - 25% */}
+          <div className="w-1/4">
+            <div className="h-full overflow-y-auto pr-2">
               {isLoading ? (
                 Array(4).fill(0).map((_, i) => (
-                  <Card key={i} className="h-48 animate-pulse bg-muted" />
+                  <Card key={i} className="mb-4 h-48 animate-pulse bg-muted" />
                 ))
               ) : restaurants.length === 0 ? (
-                <div className="col-span-2 text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground">
                   No restaurants found matching your criteria
                 </div>
               ) : (
-                restaurants.map((restaurant) => (
-                  <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-                ))
+                <div className="space-y-4">
+                  {restaurants.map((restaurant) => (
+                    <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+                  ))}
+                </div>
               )}
             </div>
           </div>
-          <div className="col-span-3">
-            <RestaurantMap
-              restaurants={restaurants}
-              center={filters.lat && filters.lng ? [filters.lat, filters.lng] : undefined}
-            />
+
+          {/* Map Section - 50% */}
+          <div className="w-1/2">
+            <div className="h-full rounded-lg overflow-hidden shadow-lg">
+              <RestaurantMap
+                restaurants={restaurants}
+                center={filters.lat && filters.lng ? [filters.lat, filters.lng] : undefined}
+              />
+            </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

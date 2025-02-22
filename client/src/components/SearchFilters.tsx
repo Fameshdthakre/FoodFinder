@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
-import type { SearchFilters, UserPreference, DietaryOptions } from "@shared/schema";
+import type { SearchFilters, UserPreference } from "@shared/schema";
 import React from 'react';
 
 const CUISINES = [
@@ -46,7 +46,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
   });
 
   // Fetch dietary options
-  const { data: dietaryOptions } = useQuery<DietaryOptions>({
+  const { data: dietaryOptions } = useQuery<Record<string, string>>({
     queryKey: ['/api/dietary-options']
   });
 
@@ -139,7 +139,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
                   onCheckedChange={(checked) => {
                     const current = watchedFields.dietaryPreferences || [];
                     const updated = checked
-                      ? [...current, value as string]
+                      ? [...current, value]
                       : current.filter(v => v !== value);
                     handleFilterChange('dietaryPreferences', updated);
                   }}
