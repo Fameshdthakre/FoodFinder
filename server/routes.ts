@@ -73,6 +73,60 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // CSV Upload endpoint
+  const multer = require('multer');
+  const { parse } = require('csv-parse');
+  const upload = multer({ storage: multer.memoryStorage() });
+
+  app.post("/api/restaurants/upload-csv", upload.single('file'), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    try {
+      const records = [];
+      const parser = parse({
+        columns: true,
+        skip_empty_lines: true
+      });
+
+      parser.on('readable', function() {
+        let record;
+        while ((record = parser.read()) !== null) {
+          records.push({
+            name: record.name,
+            rating: parseFloat(record.rating),
+            totalReviews: parseInt(record.totalReviews),
+            priceLevel: parseInt(record.priceLevel),
+            categories: record.categories.split('|'),
+            address: record.address,
+            lat: parseFloat(record.lat),
+            lng: parseFloat(record.lng),
+            reviews: record.reviews.split('|'),
+            sentimentScore: parseFloat(record.sentimentScore),
+            placeUrl: record.placeUrl,
+            dietaryOptions: record.dietaryOptions ? record.dietaryOptions.split('|') : [],
+            popularDishes: record.popularDishes ? record.popularDishes.split('|') : [],
+            peakHours: record.peakHours ? record.peakHours.split('|') : []
+          });
+        }
+      });
+
+      parser.on('end', async function() {
+        for (const record of records) {
+          await storage.insertRestaurant(record);
+        }
+        res.json({ success: true, count: records.length });
+      });
+
+      parser.write(req.file.buffer.toString());
+      parser.end();
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+      res.status(500).json({ error: "Failed to process CSV file" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
