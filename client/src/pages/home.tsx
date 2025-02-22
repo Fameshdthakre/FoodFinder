@@ -75,23 +75,25 @@ export default function Home() {
           {/* Restaurant List Section - 25% */}
           <div className="w-1/4">
             <div className="h-full overflow-y-auto pr-2">
-              <div className="mb-4">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">Sort By</h3>
                 <Select 
                   onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
                   defaultValue={filters.sortBy || 'rating'}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white/5 backdrop-blur-sm border-2 hover:bg-white/10 transition-colors">
                     <SelectValue placeholder="Sort by..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white/90 backdrop-blur-sm">
                     {[
-                      { value: 'rating', label: 'Star Rating' },
-                      { value: 'price', label: 'Price' },
-                      { value: 'distance', label: 'Distance' }
+                      { value: 'rating', label: '⭐ Star Rating' },
+                      { value: 'price', label: '💰 Price' },
+                      { value: 'distance', label: '📍 Distance' }
                     ].map(option => (
                       <SelectItem 
                         key={option.value} 
                         value={option.value}
+                        className="hover:bg-black/5"
                       >
                         {option.label}
                       </SelectItem>

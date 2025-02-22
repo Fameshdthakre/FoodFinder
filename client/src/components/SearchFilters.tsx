@@ -40,12 +40,16 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
     setValue('radius', 5);
     setValue('rating', 0);
     setValue('dietaryPreferences', []);
+    setValue('sortBy', 'rating');
     onFilterChange({
       maxPrice: 4,
       minPrice: 1,
       radius: 5,
       rating: 0,
-      dietaryPreferences: []
+      dietaryPreferences: [],
+      sortBy: 'rating',
+      lat: filters.lat,
+      lng: filters.lng
     });
   };
 
