@@ -24,7 +24,7 @@ const SORT_OPTIONS = [
   { value: 'distance', label: 'Distance' }
 ];
 
-export default function RestaurantSearchFilters({ onFilterChange, userId }: Props) {
+export default function RestaurantSearchFilters({ onFilterChange, userId, currentFilters }: Props) {
   const { register, setValue, watch } = useForm<SearchFilters>({
     defaultValues: {
       maxPrice: 4,
@@ -49,8 +49,8 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
       rating: 0,
       dietaryPreferences: [],
       sortBy: 'rating',
-      lat: props.currentFilters.lat,
-      lng: props.currentFilters.lng
+      lat: currentFilters.lat,
+      lng: currentFilters.lng
     });
   };
 
