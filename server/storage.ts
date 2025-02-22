@@ -10,7 +10,22 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async searchRestaurants(filters: SearchFilters): Promise<Restaurant[]> {
-    let query = db.select().from(restaurants);
+    let query = db
+      .select({
+        id: restaurants.id,
+        name: restaurants.name,
+        rating: sql<number>`CAST(${restaurants.rating} AS float)`,
+        totalReviews: sql<number>`CAST(${restaurants.totalReviews} AS integer)`,
+        priceLevel: sql<number>`CAST(${restaurants.priceLevel} AS integer)`,
+        categories: restaurants.categories,
+        address: restaurants.address,
+        lat: sql<number>`CAST(${restaurants.lat} AS float)`,
+        lng: sql<number>`CAST(${restaurants.lng} AS float)`,
+        reviews: restaurants.reviews,
+        sentimentScore: sql<number>`CAST(${restaurants.sentimentScore} AS float)`,
+        placeUrl: restaurants.placeUrl
+      })
+      .from(restaurants);
 
     if (filters.cuisine) {
       query = query.where(sql`${restaurants.categories} @> ARRAY[${filters.cuisine}]::varchar[]`);
@@ -32,8 +47,8 @@ export class DatabaseStorage implements IStorage {
       const maxLng = filters.lng + lngDiff;
 
       query = query.where(and(
-        sql`${restaurants.lat} BETWEEN ${minLat} AND ${maxLat}`,
-        sql`${restaurants.lng} BETWEEN ${minLng} AND ${maxLng}`
+        sql`CAST(${restaurants.lat} AS float) BETWEEN ${minLat} AND ${maxLat}`,
+        sql`CAST(${restaurants.lng} AS float) BETWEEN ${minLng} AND ${maxLng}`
       ));
     }
 
@@ -42,7 +57,20 @@ export class DatabaseStorage implements IStorage {
 
   async getRestaurant(id: number): Promise<Restaurant | undefined> {
     const [restaurant] = await db
-      .select()
+      .select({
+        id: restaurants.id,
+        name: restaurants.name,
+        rating: sql<number>`CAST(${restaurants.rating} AS float)`,
+        totalReviews: sql<number>`CAST(${restaurants.totalReviews} AS integer)`,
+        priceLevel: sql<number>`CAST(${restaurants.priceLevel} AS integer)`,
+        categories: restaurants.categories,
+        address: restaurants.address,
+        lat: sql<number>`CAST(${restaurants.lat} AS float)`,
+        lng: sql<number>`CAST(${restaurants.lng} AS float)`,
+        reviews: restaurants.reviews,
+        sentimentScore: sql<number>`CAST(${restaurants.sentimentScore} AS float)`,
+        placeUrl: restaurants.placeUrl
+      })
       .from(restaurants)
       .where(eq(restaurants.id, id));
     return restaurant;
