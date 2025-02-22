@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { SearchFilters } from "@shared/schema";
+import { SearchFilters, DietaryOptions } from "@shared/schema";
 
 export async function registerRoutes(app: Express) {
   // Search restaurants with filters
@@ -12,22 +12,24 @@ export async function registerRoutes(app: Express) {
         maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string) : undefined,
         lat: req.query.lat ? parseFloat(req.query.lat as string) : undefined,
         lng: req.query.lng ? parseFloat(req.query.lng as string) : undefined,
-        radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined
+        radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined,
+        dietaryPreferences: req.query.dietary ? (req.query.dietary as string).split(',') : undefined,
+        userId: req.query.userId as string
       };
 
-      console.log('Received filters:', filters); // Debug log
+      console.log('Received filters:', filters);
 
       const results = await storage.searchRestaurants(filters);
-      console.log(`Found ${results.length} restaurants`); // Debug log
+      console.log(`Found ${results.length} restaurants`);
 
       // Calculate recommendation scores
       const scoredResults = results.map(restaurant => ({
         ...restaurant,
-        score: calculateScore(restaurant)
+        score: calculateScore(restaurant, filters)
       }));
 
       // Sort by score and return top 10
-      scoredResults.sort((a, b) => b.score - a.score);
+      scoredResults.sort((a, b) => (b.score || 0) - (a.score || 0));
       res.json(scoredResults.slice(0, 10));
     } catch (error) {
       console.error('Error in /api/restaurants:', error);
@@ -35,24 +37,95 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Get dietary options
+  app.get("/api/dietary-options", (_req, res) => {
+    res.json(DietaryOptions);
+  });
+
+  // Get user preferences
+  app.get("/api/user-preferences/:userId", async (req, res) => {
+    try {
+      const prefs = await storage.getUserPreferences(req.params.userId);
+      res.json(prefs || {});
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get user preferences" });
+    }
+  });
+
+  // Update user preferences
+  app.post("/api/user-preferences", async (req, res) => {
+    try {
+      const prefs = await storage.setUserPreferences(req.body);
+      res.json(prefs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user preferences" });
+    }
+  });
+
+  // Record user interaction
+  app.post("/api/interactions", async (req, res) => {
+    try {
+      const { userId, restaurantId, type } = req.body;
+      await storage.recordInteraction(userId, restaurantId, type);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to record interaction" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
 
-function calculateScore(restaurant: any) {
-  // Normalize ratings to 0-1
-  const ratingScore = restaurant.rating / 5;
+function calculateScore(restaurant: any, filters: SearchFilters) {
+  let score = 0;
 
-  // Normalize price (1-4) to 0-1 (inverted so cheaper is better)
-  const priceScore = (5 - restaurant.priceLevel) / 4;
+  // Base score components (40%)
+  const ratingScore = (restaurant.rating / 5) * 0.2;
+  const priceScore = ((5 - restaurant.priceLevel) / 4) * 0.1;
+  const sentimentScore = ((restaurant.sentimentScore + 1) / 2) * 0.1;
+  score += ratingScore + priceScore + sentimentScore;
 
-  // Normalize sentiment (-1 to 1) to 0-1
-  const sentimentScore = (restaurant.sentimentScore + 1) / 2;
+  // Location proximity score (30%)
+  if (filters.lat && filters.lng) {
+    const distance = calculateDistance(
+      filters.lat,
+      filters.lng,
+      parseFloat(restaurant.lat),
+      parseFloat(restaurant.lng)
+    );
+    const proximityScore = Math.max(0, 1 - (distance / (filters.radius || 5))) * 0.3;
+    score += proximityScore;
+  }
 
-  // Weighted average
-  return (
-    0.4 * ratingScore +
-    0.3 * priceScore +
-    0.3 * sentimentScore
-  );
+  // Dietary preference match (20%)
+  if (filters.dietaryPreferences?.length && restaurant.dietaryOptions?.length) {
+    const matchingPrefs = filters.dietaryPreferences.filter(pref =>
+      restaurant.dietaryOptions.includes(pref)
+    ).length;
+    const dietaryScore = (matchingPrefs / filters.dietaryPreferences.length) * 0.2;
+    score += dietaryScore;
+  }
+
+  // Popularity and trend score (10%)
+  const popularityScore = Math.min(1, restaurant.totalReviews / 1000) * 0.1;
+  score += popularityScore;
+
+  return score;
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
+
+function deg2rad(deg: number): number {
+  return deg * (Math.PI / 180);
 }
