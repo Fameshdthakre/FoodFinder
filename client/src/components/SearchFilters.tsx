@@ -27,11 +27,14 @@ export default function RestaurantSearchFilters({ onFilterChange }: Props) {
 
   // Update parent component whenever any field changes
   const handleFilterChange = (field: keyof SearchFilters, value: any) => {
+    console.log('Updating filter:', field, value); // Debug log
     setValue(field, value);
-    onFilterChange({
+    const updatedFilters = {
       ...watchedFields,
       [field]: value
-    });
+    };
+    console.log('New filters:', updatedFilters); // Debug log
+    onFilterChange(updatedFilters);
   };
 
   return (
@@ -40,7 +43,7 @@ export default function RestaurantSearchFilters({ onFilterChange }: Props) {
         <Label>Cuisine Type</Label>
         <Select 
           onValueChange={(value) => handleFilterChange('cuisine', value)}
-          defaultValue={watchedFields.cuisine}
+          defaultValue={watchedFields.cuisine || 'all'}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select cuisine" />

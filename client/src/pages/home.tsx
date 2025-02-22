@@ -42,8 +42,14 @@ export default function Home() {
     .join('&');
 
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({
-    queryKey: [`/api/restaurants?${queryString}`],
-    enabled: Boolean(filters.lat && filters.lng)
+    queryKey: ['/api/restaurants', filters],  // Changed to include filters object directly
+    queryFn: async () => {
+      const response = await fetch(`/api/restaurants?${queryString}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch restaurants');
+      }
+      return response.json();
+    }
   });
 
   return (
@@ -56,7 +62,12 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <Card className="p-4">
-              <RestaurantSearchFilters onFilterChange={setFilters} />
+              <RestaurantSearchFilters 
+                onFilterChange={(newFilters) => {
+                  console.log('Filters updated:', newFilters); // Debug log
+                  setFilters(newFilters);
+                }} 
+              />
             </Card>
           </div>
 
