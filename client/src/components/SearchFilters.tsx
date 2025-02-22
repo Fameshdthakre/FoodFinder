@@ -37,26 +37,42 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
   const clearFilters = () => {
     // Default values
     const defaultValues = {
-      cuisine: 'all',
+      rating: 0,
       maxPrice: 4,
       minPrice: 1,
       radius: 5,
-      rating: 0,
       dietaryPreferences: [],
       sortBy: 'rating'
     };
 
-    // Reset form values
-    Object.entries(defaultValues).forEach(([key, value]) => {
-      setValue(key as keyof SearchFilters, value);
-    });
+    // Reset form values including sliders
+    setValue('rating', 0);
+    setValue('maxPrice', 4);
+    setValue('minPrice', 1);
+    setValue('radius', 5);
+    
+    // Force slider updates by triggering events
+    const ratingSlider = document.querySelector('input[type="range"][max="5"]') as HTMLInputElement;
+    if (ratingSlider) {
+      ratingSlider.value = '0';
+      ratingSlider.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const priceSlider = document.querySelector('input[type="range"][max="4"]') as HTMLInputElement;
+    if (priceSlider) {
+      priceSlider.value = '1,4';
+      priceSlider.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // Reset radius input
+    const radiusInput = document.querySelector('input[type="number"]') as HTMLInputElement;
+    if (radiusInput) {
+      radiusInput.value = '5';
+    }
 
     // Update parent component with reset values
     onFilterChange({
       ...defaultValues,
-      rating: 0,
-      dietaryPreferences: [],
-      sortBy: 'rating',
       lat: currentFilters.lat,
       lng: currentFilters.lng
     });
