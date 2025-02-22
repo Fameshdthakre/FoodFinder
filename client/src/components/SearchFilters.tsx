@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
-import type { SearchFilters } from "@shared/schema";
+import type { SearchFilters, UserPreference, DietaryOptions } from "@shared/schema";
 import React from 'react';
 
 const CUISINES = [
@@ -31,6 +31,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
       dietaryPreferences: []
     });
   };
+
   const { register, setValue, watch } = useForm<SearchFilters>({
     defaultValues: {
       maxPrice: 4,
@@ -39,13 +40,13 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
   });
 
   // Fetch user preferences if userId is provided
-  const { data: userPrefs } = useQuery({
+  const { data: userPrefs } = useQuery<UserPreference>({
     queryKey: [`/api/user-preferences/${userId}`],
     enabled: !!userId
   });
 
   // Fetch dietary options
-  const { data: dietaryOptions = [] } = useQuery({
+  const { data: dietaryOptions } = useQuery<DietaryOptions>({
     queryKey: ['/api/dietary-options']
   });
 
@@ -54,26 +55,24 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
 
   // Update parent component whenever any field changes
   const handleFilterChange = (field: keyof SearchFilters, value: any) => {
-    console.log('Updating filter:', field, value);
     setValue(field, value);
     const updatedFilters = {
       ...watchedFields,
       [field]: value,
-      userId // Include userId in filters
+      userId
     };
-    console.log('New filters:', updatedFilters);
     onFilterChange(updatedFilters);
   };
 
   // Update filters with user preferences when available
   React.useEffect(() => {
-    if (userPrefs) {
+    if (userPrefs?.dietaryPreferences) {
       setValue('dietaryPreferences', userPrefs.dietaryPreferences);
-      setValue('maxPrice', userPrefs.pricePreference);
+      setValue('maxPrice', userPrefs.pricePreference || 4);
       onFilterChange({
         ...watchedFields,
         dietaryPreferences: userPrefs.dietaryPreferences,
-        maxPrice: userPrefs.pricePreference,
+        maxPrice: userPrefs.pricePreference || 4,
         userId
       });
     }
@@ -117,12 +116,6 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={clearFilters}>
-          Clear Filters
-        </Button>
-      </div>
-
       <div className="space-y-2">
         <Label>Search Radius (km)</Label>
         <Input
@@ -134,7 +127,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
         />
       </div>
 
-      {dietaryOptions.length > 0 && (
+      {dietaryOptions && (
         <div className="space-y-2">
           <Label>Dietary Preferences</Label>
           <div className="grid grid-cols-2 gap-2">
@@ -146,7 +139,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
                   onCheckedChange={(checked) => {
                     const current = watchedFields.dietaryPreferences || [];
                     const updated = checked
-                      ? [...current, value]
+                      ? [...current, value as string]
                       : current.filter(v => v !== value);
                     handleFilterChange('dietaryPreferences', updated);
                   }}
@@ -162,6 +155,12 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
           </div>
         </div>
       )}
+
+      <div className="flex justify-between items-center pt-4">
+        <Button variant="outline" onClick={clearFilters}>
+          Clear Filters
+        </Button>
+      </div>
     </div>
   );
 }

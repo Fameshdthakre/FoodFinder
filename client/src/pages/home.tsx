@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, Button } from "@/components/ui/card"; // Added Button import, assuming it exists
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button"; // Fixed import
 import RestaurantSearchFilters from "@/components/SearchFilters";
 import RestaurantCard from "@/components/RestaurantCard";
 import RestaurantMap from "@/components/RestaurantMap";
@@ -10,7 +11,7 @@ export default function Home() {
   const [filters, setFilters] = useState<SearchFilters>({
     maxPrice: 4,
     radius: 5,
-    dietaryPreferences: [] // Added dietaryPreferences to filters
+    dietaryPreferences: []
   });
 
   // Get user's location for initial map center
@@ -38,12 +39,12 @@ export default function Home() {
 
   // Build query string from filters
   const queryString = Object.entries(filters)
-    .filter(([_, value]) => value !== undefined && value !== '' && (Array.isArray(value) ? value.length > 0 : true)) //handle arrays
-    .map(([key, value]) => `${key}=${encodeURIComponent(Array.isArray(value) ? value.join(',') : value)}`) // handle arrays
+    .filter(([_, value]) => value !== undefined && value !== '' && (Array.isArray(value) ? value.length > 0 : true))
+    .map(([key, value]) => `${key}=${encodeURIComponent(Array.isArray(value) ? value.join(',') : value)}`)
     .join('&');
 
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({
-    queryKey: ['/api/restaurants', filters],
+    queryKey: ['/api/restaurants', queryString],
     queryFn: async () => {
       const response = await fetch(`/api/restaurants?${queryString}`);
       if (!response.ok) {
@@ -53,9 +54,6 @@ export default function Home() {
     }
   });
 
-  const clearFilters = () => {
-    setFilters({ maxPrice: 4, radius: 5, dietaryPreferences: [] });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,9 +66,8 @@ export default function Home() {
           <div className="col-span-3 space-y-4">
             <Card className="p-4">
               <RestaurantSearchFilters
-                onFilterChange={(newFilters) => setFilters(newFilters)}
+                onFilterChange={setFilters}
               />
-              <Button onClick={clearFilters}>Clear Filters</Button> {/* Added clear filters button */}
             </Card>
           </div>
           <div className="col-span-6 space-y-4">
