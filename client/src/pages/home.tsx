@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import RestaurantSearchFilters from "@/components/SearchFilters";
 import RestaurantCard from "@/components/RestaurantCard";
@@ -74,6 +75,30 @@ export default function Home() {
           {/* Restaurant List Section - 25% */}
           <div className="w-1/4">
             <div className="h-full overflow-y-auto pr-2">
+              <div className="mb-4">
+                <Select 
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
+                  defaultValue={filters.sortBy || 'rating'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      { value: 'rating', label: 'Star Rating' },
+                      { value: 'price', label: 'Price' },
+                      { value: 'distance', label: 'Distance' }
+                    ].map(option => (
+                      <SelectItem 
+                        key={option.value} 
+                        value={option.value}
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               {isLoading ? (
                 Array(4).fill(0).map((_, i) => (
                   <Card key={i} className="mb-4 h-48 animate-pulse bg-muted" />

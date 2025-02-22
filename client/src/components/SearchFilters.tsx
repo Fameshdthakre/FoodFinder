@@ -117,23 +117,20 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
 
       <div className="space-y-2">
         <Label>Price Range</Label>
-        <div className="flex gap-4">
-          <Input
-            type="number"
-            min={1}
-            max={watchedFields.maxPrice}
-            value={watchedFields.minPrice}
-            onChange={(e) => handleFilterChange('minPrice', parseInt(e.target.value))}
-            placeholder="Min"
-          />
-          <Input
-            type="number"
-            min={watchedFields.minPrice}
+        <div className="pt-2">
+          <Slider
+            defaultValue={[watchedFields.minPrice || 1, watchedFields.maxPrice || 4]}
             max={4}
-            value={watchedFields.maxPrice}
-            onChange={(e) => handleFilterChange('maxPrice', parseInt(e.target.value))}
-            placeholder="Max"
+            min={1}
+            step={1}
+            onValueChange={([min, max]) => {
+              handleFilterChange('minPrice', min);
+              handleFilterChange('maxPrice', max);
+            }}
           />
+          <div className="text-sm text-muted-foreground mt-1">
+            {watchedFields.minPrice}$ - {watchedFields.maxPrice}$
+          </div>
         </div>
       </div>
 
@@ -151,7 +148,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
       {dietaryOptions && (
         <div className="space-y-2">
           <Label>Dietary Preferences</Label>
-          <div className="grid grid-cols-1 gap-2">
+          <div className="flex gap-4">
             {['VEGAN', 'VEGETARIAN', 'NON_VEGETARIAN'].map((key) => (
               <div key={key} className="flex items-center space-x-2">
                 <Checkbox
@@ -177,27 +174,7 @@ export default function RestaurantSearchFilters({ onFilterChange, userId }: Prop
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label>Sort By</Label>
-        <Select 
-          onValueChange={(value) => handleFilterChange('sortBy', value)}
-          defaultValue={watchedFields.sortBy || 'rating'}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Sort by..." />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map(option => (
-              <SelectItem 
-                key={option.value} 
-                value={option.value}
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      
 
       <div className="flex justify-between items-center pt-4">
         <Button variant="outline" onClick={clearFilters}>
