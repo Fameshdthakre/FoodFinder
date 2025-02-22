@@ -35,14 +35,18 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
   });
 
   const clearFilters = () => {
-    setValue('cuisine', undefined);
+    // Reset form values
+    setValue('cuisine', 'all');
     setValue('maxPrice', 4);
     setValue('minPrice', 1);
     setValue('radius', 5);
     setValue('rating', 0);
     setValue('dietaryPreferences', []);
     setValue('sortBy', 'rating');
+
+    // Update parent component with reset values
     onFilterChange({
+      cuisine: 'all',
       maxPrice: 4,
       minPrice: 1,
       radius: 5,
@@ -51,6 +55,12 @@ export default function RestaurantSearchFilters({ onFilterChange, userId, curren
       sortBy: 'rating',
       lat: currentFilters.lat,
       lng: currentFilters.lng
+    });
+
+    // Reset form checkboxes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((checkbox: HTMLInputElement) => {
+      checkbox.checked = false;
     });
   };
 
